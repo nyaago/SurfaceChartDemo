@@ -7,13 +7,22 @@
 //
 
 #import "AppDelegate.h"
+#import "SurfaceChartDemoDataSource.h"
+#import "SurfaceChartViewController.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
-    return YES;
+  self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+  SurfaceChartViewController *viewController = [[SurfaceChartViewController alloc] init];
+  viewController.source = [[SurfaceChartDemoDataSource alloc] init];
+  [self.window setRootViewController:viewController];
+  
+  [self.window makeKeyAndVisible];
+
+  return YES;
 }
 							
 - (void)applicationWillResignActive:(UIApplication *)application

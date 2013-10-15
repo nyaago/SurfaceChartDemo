@@ -15,16 +15,21 @@
 		72F726E2180CCDE9003DC48D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 72F726E0180CCDE9003DC48D /* InfoPlist.strings */; };
 		72F726E4180CCDE9003DC48D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F726E3180CCDE9003DC48D /* main.m */; };
 		72F726E8180CCDE9003DC48D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F726E7180CCDE9003DC48D /* AppDelegate.m */; };
-		72F726EB180CCDE9003DC48D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 72F726E9180CCDE9003DC48D /* Main.storyboard */; };
-		72F726ED180CCDE9003DC48D /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F726EC180CCDE9003DC48D /* Shader.fsh */; };
 		72F726EF180CCDE9003DC48D /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F726EE180CCDE9003DC48D /* Shader.vsh */; };
-		72F726F2180CCDE9003DC48D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F726F1180CCDE9003DC48D /* ViewController.m */; };
+		72F726F2180CCDE9003DC48D /* SurfaceChartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F726F1180CCDE9003DC48D /* SurfaceChartViewController.m */; };
 		72F726F4180CCDE9003DC48D /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 72F726F3180CCDE9003DC48D /* Images.xcassets */; };
 		72F726FB180CCDE9003DC48D /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726FA180CCDE9003DC48D /* XCTest.framework */; };
 		72F726FC180CCDE9003DC48D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726D3180CCDE8003DC48D /* Foundation.framework */; };
 		72F726FD180CCDE9003DC48D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726D7180CCDE9003DC48D /* UIKit.framework */; };
 		72F72705180CCDE9003DC48D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 72F72703180CCDE9003DC48D /* InfoPlist.strings */; };
 		72F72707180CCDE9003DC48D /* SurfaceChartDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F72706180CCDE9003DC48D /* SurfaceChartDemoTests.m */; };
+		72F72711180D116C003DC48D /* Shader.fsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72710180D116C003DC48D /* Shader.fsh */; };
+		72F72713180D1185003DC48D /* TextureShader.vsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72712180D1185003DC48D /* TextureShader.vsh */; };
+		72F72717180D264E003DC48D /* TextureShadre.fsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72716180D264E003DC48D /* TextureShadre.fsh */; };
+		72F7271A180D2ADC003DC48D /* SurfaceChartDemoDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F72719180D2ADC003DC48D /* SurfaceChartDemoDataSource.m */; };
+		72F7271D180D3B4B003DC48D /* GLColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F7271C180D3B4B003DC48D /* GLColor.m */; };
+		72F72720180D4D29003DC48D /* ColorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F7271F180D4D29003DC48D /* ColorUtils.m */; };
+		72F72723180D769C003DC48D /* FloatArray.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F72722180D769C003DC48D /* FloatArray.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,17 +55,26 @@
 		72F726E5180CCDE9003DC48D /* SurfaceChartDemo-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SurfaceChartDemo-Prefix.pch"; sourceTree = "<group>"; };
 		72F726E6180CCDE9003DC48D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		72F726E7180CCDE9003DC48D /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		72F726EA180CCDE9003DC48D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		72F726EC180CCDE9003DC48D /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
-		72F726EE180CCDE9003DC48D /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
-		72F726F0180CCDE9003DC48D /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		72F726F1180CCDE9003DC48D /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		72F726EE180CCDE9003DC48D /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = Shader.vsh; sourceTree = "<group>"; };
+		72F726F0180CCDE9003DC48D /* SurfaceChartViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SurfaceChartViewController.h; path = SurfaceChart/SurfaceChartViewController.h; sourceTree = SOURCE_ROOT; };
+		72F726F1180CCDE9003DC48D /* SurfaceChartViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SurfaceChartViewController.m; path = SurfaceChart/SurfaceChartViewController.m; sourceTree = SOURCE_ROOT; };
 		72F726F3180CCDE9003DC48D /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		72F726F9180CCDE9003DC48D /* SurfaceChartDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SurfaceChartDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F726FA180CCDE9003DC48D /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		72F72702180CCDE9003DC48D /* SurfaceChartDemoTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SurfaceChartDemoTests-Info.plist"; sourceTree = "<group>"; };
 		72F72704180CCDE9003DC48D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		72F72706180CCDE9003DC48D /* SurfaceChartDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SurfaceChartDemoTests.m; sourceTree = "<group>"; };
+		72F72710180D116C003DC48D /* Shader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = Shader.fsh; sourceTree = "<group>"; };
+		72F72712180D1185003DC48D /* TextureShader.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = TextureShader.vsh; sourceTree = "<group>"; };
+		72F72716180D264E003DC48D /* TextureShadre.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = TextureShadre.fsh; sourceTree = "<group>"; };
+		72F72718180D2ADC003DC48D /* SurfaceChartDemoDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SurfaceChartDemoDataSource.h; sourceTree = "<group>"; };
+		72F72719180D2ADC003DC48D /* SurfaceChartDemoDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SurfaceChartDemoDataSource.m; sourceTree = "<group>"; };
+		72F7271B180D3B4B003DC48D /* GLColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLColor.h; sourceTree = "<group>"; };
+		72F7271C180D3B4B003DC48D /* GLColor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLColor.m; sourceTree = "<group>"; };
+		72F7271E180D4D29003DC48D /* ColorUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorUtils.h; sourceTree = "<group>"; };
+		72F7271F180D4D29003DC48D /* ColorUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorUtils.m; sourceTree = "<group>"; };
+		72F72721180D769C003DC48D /* FloatArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FloatArray.h; sourceTree = "<group>"; };
+		72F72722180D769C003DC48D /* FloatArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FloatArray.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +106,7 @@
 		72F726C7180CCDE8003DC48D = {
 			isa = PBXGroup;
 			children = (
+				72F72714180D2537003DC48D /* SurfaceChart */,
 				72F726DD180CCDE9003DC48D /* SurfaceChartDemo */,
 				72F72700180CCDE9003DC48D /* SurfaceChartDemoTests */,
 				72F726D2180CCDE8003DC48D /* Frameworks */,
@@ -126,13 +141,10 @@
 			children = (
 				72F726E6180CCDE9003DC48D /* AppDelegate.h */,
 				72F726E7180CCDE9003DC48D /* AppDelegate.m */,
-				72F726E9180CCDE9003DC48D /* Main.storyboard */,
-				72F726EC180CCDE9003DC48D /* Shader.fsh */,
-				72F726EE180CCDE9003DC48D /* Shader.vsh */,
-				72F726F0180CCDE9003DC48D /* ViewController.h */,
-				72F726F1180CCDE9003DC48D /* ViewController.m */,
 				72F726F3180CCDE9003DC48D /* Images.xcassets */,
 				72F726DE180CCDE9003DC48D /* Supporting Files */,
+				72F72718180D2ADC003DC48D /* SurfaceChartDemoDataSource.h */,
+				72F72719180D2ADC003DC48D /* SurfaceChartDemoDataSource.m */,
 			);
 			path = SurfaceChartDemo;
 			sourceTree = "<group>";
@@ -164,6 +176,33 @@
 				72F72703180CCDE9003DC48D /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		72F72714180D2537003DC48D /* SurfaceChart */ = {
+			isa = PBXGroup;
+			children = (
+				72F72715180D256B003DC48D /* Shaders */,
+				72F726F0180CCDE9003DC48D /* SurfaceChartViewController.h */,
+				72F726F1180CCDE9003DC48D /* SurfaceChartViewController.m */,
+				72F7271B180D3B4B003DC48D /* GLColor.h */,
+				72F7271C180D3B4B003DC48D /* GLColor.m */,
+				72F7271E180D4D29003DC48D /* ColorUtils.h */,
+				72F7271F180D4D29003DC48D /* ColorUtils.m */,
+				72F72721180D769C003DC48D /* FloatArray.h */,
+				72F72722180D769C003DC48D /* FloatArray.m */,
+			);
+			path = SurfaceChart;
+			sourceTree = "<group>";
+		};
+		72F72715180D256B003DC48D /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				72F72716180D264E003DC48D /* TextureShadre.fsh */,
+				72F726EE180CCDE9003DC48D /* Shader.vsh */,
+				72F72710180D116C003DC48D /* Shader.fsh */,
+				72F72712180D1185003DC48D /* TextureShader.vsh */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -244,9 +283,7 @@
 			files = (
 				72F726EF180CCDE9003DC48D /* Shader.vsh in Resources */,
 				72F726F4180CCDE9003DC48D /* Images.xcassets in Resources */,
-				72F726ED180CCDE9003DC48D /* Shader.fsh in Resources */,
 				72F726E2180CCDE9003DC48D /* InfoPlist.strings in Resources */,
-				72F726EB180CCDE9003DC48D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,8 +302,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				72F726F2180CCDE9003DC48D /* ViewController.m in Sources */,
+				72F72717180D264E003DC48D /* TextureShadre.fsh in Sources */,
+				72F72711180D116C003DC48D /* Shader.fsh in Sources */,
+				72F726F2180CCDE9003DC48D /* SurfaceChartViewController.m in Sources */,
+				72F72720180D4D29003DC48D /* ColorUtils.m in Sources */,
+				72F72723180D769C003DC48D /* FloatArray.m in Sources */,
+				72F72713180D1185003DC48D /* TextureShader.vsh in Sources */,
 				72F726E8180CCDE9003DC48D /* AppDelegate.m in Sources */,
+				72F7271A180D2ADC003DC48D /* SurfaceChartDemoDataSource.m in Sources */,
+				72F7271D180D3B4B003DC48D /* GLColor.m in Sources */,
 				72F726E4180CCDE9003DC48D /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -296,14 +340,6 @@
 				72F726E1180CCDE9003DC48D /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		72F726E9180CCDE9003DC48D /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				72F726EA180CCDE9003DC48D /* Base */,
-			);
-			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
 		72F72703180CCDE9003DC48D /* InfoPlist.strings */ = {
