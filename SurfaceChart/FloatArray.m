@@ -36,6 +36,10 @@
   _position += count;
 }
 
+- (NSInteger) advancePosition:(NSInteger)count {
+  _position += count;
+  return _position;
+}
 
 
 @end

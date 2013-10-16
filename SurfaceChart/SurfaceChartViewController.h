@@ -158,6 +158,11 @@
  */
 @property (nonatomic, strong) GLColor *valueLineColor;
 
+/*!
+ テキストカラー
+ */
+@property (nonatomic, strong) UIColor *textColor;
+
 
 @property (nonatomic) NSInteger scaleFontSize;
 @property (nonatomic) NSInteger titleFontSize;

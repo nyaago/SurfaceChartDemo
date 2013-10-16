@@ -41,7 +41,7 @@
   return 500;
 }
 - (NSInteger) zAxisScale {
-  return 10;
+  return 20;
 }
 - (NSInteger) xAxisScaleForValue {
   return 1000;
@@ -51,7 +51,7 @@
 }
 
 - (NSString *) xAxisName:(NSInteger)x {
-  return [NSString stringWithFormat:@"%d", x];
+  return [NSString stringWithFormat:@"%d", x / 1000];
 }
 - (NSString *) yAxisName:(NSInteger)y {
   return [NSString stringWithFormat:@"%d", y];
@@ -63,7 +63,7 @@
 }
 
 - (NSString *) xAxisTitle {
-    return @"x-axis";
+    return @"x-axis - X軸";
 }
 - (NSString *) yAxisTitle {
   return @"y-axis";

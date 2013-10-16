@@ -14,7 +14,7 @@
 
 - (void) putValue:(CGFloat)value;
 - (void) putValues:(CGFloat [])values count:(NSInteger)count;
-
+- (NSInteger) advancePosition:(NSInteger)count;
 
 @property (nonatomic, readonly) CGFloat *array;
 @property (nonatomic) NSInteger position;

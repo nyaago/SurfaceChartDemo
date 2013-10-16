@@ -8,20 +8,23 @@
 
 #import "SurfaceChartViewController.h"
 #import "FloatArray.h"
+#import "TextImage.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 #define VERTEX_POS_SIZE  3
 #define VERTEX_COLOR_SIZE  3
+#define TEXCOORDS_SIZE  2
 
-#define VERTEX_ATTRIB_SIZE 6
+#define VERTEX_ATTRIB_SIZE 8
 
 // Uniform index.
 enum
 {
     UNIFORM_MODELVIEWPROJECTION_MATRIX,
     UNIFORM_NORMAL_MATRIX,
-    NUM_UNIFORMS
+UNIFORM_TEXTURE,
+    NUM_UNIFORMS,
 };
 GLint uniforms[NUM_UNIFORMS];
 
@@ -44,6 +47,8 @@ enum
   GLuint _vertexArray;
   GLuint _vertexBuffer;
 
+  GLuint _texture;
+  
   GLuint _textureVertexArray;
   GLuint _textureVertexBuffer;
 
@@ -65,6 +70,7 @@ enum
    */
   NSInteger _firstOfValue;
 
+  NSInteger _firstOfTexture;
   /*!
    * X軸での回転角度
    */
@@ -89,6 +95,7 @@ enum
 - (void)tearDownGL;
 
 - (BOOL)loadShaders;
+- (BOOL)loadTextureShaders;
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
 - (BOOL)linkProgram:(GLuint)prog;
 - (BOOL)validateProgram:(GLuint)prog;
@@ -108,7 +115,14 @@ enum
 - (void)viewDidLoad
 {
   [super viewDidLoad];
-  _vertexs = [[FloatArray alloc] initWithCount:[self countValueVertex] * 6];
+  
+  _vertexs = [[FloatArray alloc]
+              initWithCount:([self countValueVertex]
+                             + [self countXYAxisVertex]
+                             + [self countXZAxisVertex]
+                             + [self countYZAxisVertex]
+                             + 4)
+                            * VERTEX_ATTRIB_SIZE * 4];
   
   self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -154,14 +168,13 @@ enum
 {
   [EAGLContext setCurrentContext:self.context];
   
+  [self loadTextureShaders];
   [self loadShaders];
   [self addVertex];
-  
-  /*
   self.effect = [[GLKBaseEffect alloc] init];
   self.effect.light0.enabled = GL_TRUE;
   self.effect.light0.diffuseColor = GLKVector4Make(1.0f, 0.4f, 0.4f, 1.0f);
-  */
+  
   glEnable(GL_COLOR_ARRAY);
   
   glGenVertexArraysOES(1, &_vertexArray);
@@ -169,6 +182,10 @@ enum
   
   glGenBuffers(1, &_vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+  
+  glGenTextures( 1, &_texture );
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture( GL_TEXTURE_2D, _texture );
   
   glBufferData(GL_ARRAY_BUFFER, sizeof(CGFloat) + [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
   //glBufferData(GL_ARRAY_BUFFER, sizeof(gCubeVertexData), gCubeVertexData, GL_STATIC_DRAW);
@@ -181,6 +198,11 @@ enum
   glVertexAttribPointer(GLKVertexAttribColor, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE,
                         VERTEX_ATTRIB_SIZE * sizeof(GLfloat),
                         BUFFER_OFFSET(VERTEX_POS_SIZE * sizeof(GLfloat)));
+
+  glEnableVertexAttribArray(GLKVertexAttribTexCoord0);
+  glVertexAttribPointer(GLKVertexAttribTexCoord0, TEXCOORDS_SIZE, GL_FLOAT, GL_FALSE,
+                        VERTEX_ATTRIB_SIZE * sizeof(GLfloat),
+                        BUFFER_OFFSET((VERTEX_POS_SIZE + VERTEX_COLOR_SIZE) * sizeof(GLfloat)));
 
   
   glBindVertexArrayOES(0);
@@ -198,6 +220,10 @@ enum
   if (_program) {
     glDeleteProgram(_program);
     _program = 0;
+  }
+  if(_textureProgram) {
+    glDeleteProgram(_textureProgram);
+    _textureProgram = 0;
   }
 }
 
@@ -254,13 +280,26 @@ enum
 //  [self drawVertexArray];
   
   // Render the object again with ES2
+  // Chart
   glUseProgram(_program);
-  
-  glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0, _modelViewProjectionMatrix.m);
+  glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0,
+                     _modelViewProjectionMatrix.m);
   glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
-  
   glLineWidth(1.0f);
+  glEnableVertexAttribArray(GLKVertexAttribColor);
   [self drawVertexArray];
+  
+  // 文字
+  glDisableVertexAttribArray(GLKVertexAttribColor);
+  glUseProgram(_textureProgram);
+  glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0,
+                     _modelViewProjectionMatrix.m);
+  glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
+  glUniform1i(glGetUniformLocation(_textureProgram, "texture"), 0);
+  glEnableVertexAttribArray(GLKVertexAttribTexCoord0);
+
+  [self drawTextTextures];
+  
 }
 
 #pragma mark -  OpenGL ES 2 shader compilation
@@ -299,6 +338,8 @@ enum
   glBindAttribLocation(_program, GLKVertexAttribNormal, "normal");
 
   glBindAttribLocation(_program, GLKVertexAttribColor, "color");
+  glBindAttribLocation(_program, GLKVertexAttribTexCoord0, "texcoord");
+
   // Link program.
   if (![self linkProgram:_program]) {
       NSLog(@"Failed to link program: %d", _program);
@@ -335,6 +376,79 @@ enum
   
   return YES;
 }
+
+- (BOOL)loadTextureShaders
+{
+  GLuint vertShader, fragShader;
+  NSString *vertShaderPathname, *fragShaderPathname;
+  
+  // Create shader program.
+  _textureProgram = glCreateProgram();
+  // Create and compile fragment shader.
+  fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"TextureShader" ofType:@"fsh"];
+  if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname]) {
+    NSLog(@"Failed to compile fragment shader");
+    return NO;
+  }
+
+
+  // Create and compile vertex shader.
+  vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"TextureShader" ofType:@"vsh"];
+  if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname]) {
+    NSLog(@"Failed to compile vertex shader");
+    return NO;
+  }
+
+  // Attach vertex shader to program.
+  glAttachShader(_textureProgram, vertShader);
+  
+  // Attach fragment shader to program.
+  glAttachShader(_textureProgram, fragShader);
+  
+  // Bind attribute locations.
+  // This needs to be done prior to linking.
+  glBindAttribLocation(_textureProgram, GLKVertexAttribPosition, "position");
+  glBindAttribLocation(_textureProgram, GLKVertexAttribNormal, "normal");
+  glBindAttribLocation(_textureProgram, GLKVertexAttribTexCoord0, "texcoord");
+//  glBindAttribLocation(_textureProgram, ATTRIB_TEXCOORD, "texcoord" );
+  // Link program.
+  if (![self linkProgram:_textureProgram]) {
+    NSLog(@"Failed to link program: %d", _textureProgram);
+    
+    if (vertShader) {
+      glDeleteShader(vertShader);
+      vertShader = 0;
+    }
+    if (fragShader) {
+      glDeleteShader(fragShader);
+      fragShader = 0;
+    }
+    if (_textureProgram) {
+      glDeleteProgram(_textureProgram);
+      _textureProgram = 0;
+    }
+    
+    return NO;
+  }
+  
+  // Get uniform locations.
+  uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_textureProgram,
+                                                                      "modelViewProjectionMatrix");
+  uniforms[UNIFORM_NORMAL_MATRIX] = glGetUniformLocation(_textureProgram, "normalMatrix");
+
+  // Release vertex and fragment shaders.
+  if (vertShader) {
+    glDetachShader(_textureProgram, vertShader);
+    glDeleteShader(vertShader);
+  }
+  if (fragShader) {
+    glDetachShader(_textureProgram, fragShader);
+    glDeleteShader(fragShader);
+  }
+  
+  return YES;
+}
+
 
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file
 {
@@ -424,7 +538,7 @@ enum
   _firstOfYZAxis = [self addXYAxisVertex];
   _firstOfXZAxis = [self addYZAxisVertex];
   _firstOfValue = [self addXZAxisVertex];
-  [self addValueVertex];
+  _firstOfTexture = [self addValueVertex];
 }
 
 - (void) drawVertexArray {
@@ -434,7 +548,24 @@ enum
   [self drawXZAxisVertex:_firstOfXZAxis];
   glEnable(GL_DEPTH_TEST);
   [self drawValueVertex:_firstOfValue];
+  glDisable(GL_DEPTH_TEST);
 }
+
+/**
+ * 各テキストの描画
+ * @param gl
+ */
+-(void) drawTextTextures {
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_COLOR_ARRAY);
+
+  [self drawXAxisNames];
+  [self drawYAxisNames];
+  [self drawZAxisNames];
+
+  glDisable(GL_TEXTURE_2D);
+}
+
 
 /*!
  * 値をTRIANGLEでfillするさいにY座標からマイナスする値 - 線が隠れないように下げる量
@@ -461,6 +592,7 @@ enum
       vertex[2] = [self zAxisToPoint:z];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[[self.source colorForY:y] rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
       
       // 奥左
       y =  [self.source yWithX:x z:z + [self.source zAxisScaleForValue]];
@@ -469,6 +601,7 @@ enum
       vertex[2] = [self zAxisToPoint:z + [self.source zAxisScaleForValue]];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[[self.source colorForY:y] rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
       
       // 手前右
       y = [self.source yWithX:x + [self.source xAxisScaleForValue] z:z];
@@ -477,6 +610,7 @@ enum
       vertex[2] = [self zAxisToPoint:z];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[[self.source colorForY:y] rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
       
       // 奥右
       y = [self.source yWithX:x + [self.source xAxisScaleForValue] z:z + [self.source zAxisScaleForValue]];
@@ -485,6 +619,7 @@ enum
       vertex[2] = [self zAxisToPoint:z + [self.source zAxisScaleForValue]];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[[self.source colorForY:y] rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
       
     }
   }
@@ -502,11 +637,13 @@ enum
       vertex[2] = [self zAxisToPoint:z];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
-      
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
+  
       vertex[0] = [self xAxisToPoint:x + [self.source xAxisScaleForValue]];
       vertex[1] = [self yAxisToPoint:[self.source yWithX:x + [self.source xAxisScaleForValue] z:z]];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
     }
   }
   // === line z 軸
@@ -522,11 +659,13 @@ enum
       vertex[2] = [self zAxisToPoint:z];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
 
       vertex[1] = [self yAxisToPoint:[self.source yWithX:x z:z + [self.source zAxisScaleForValue]]];
       vertex[2] = [self zAxisToPoint:z + [self.source zAxisScaleForValue]];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+      [_vertexs advancePosition:TEXCOORDS_SIZE];
     }
   }
   
@@ -539,9 +678,12 @@ enum
     vertex[2] = [self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
+
     vertex[1] = [self yAxisToPoint:[self.source yAxisMin]];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   
   // === 左の部分の縦線
@@ -553,9 +695,12 @@ enum
     vertex[2] = [self zAxisToPoint:z];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
+
     vertex[1] = [self yAxisToPoint:[self.source yAxisMin]];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   return _vertexs.position;
 }
@@ -570,8 +715,21 @@ enum
   + ([self scaleCountOfXAxisForValue] -1 ) *  ([self scaleCountOfZAxisForValue] ) * 2
   + ([self scaleCountOfXAxisForValue] ) *  ([self scaleCountOfZAxisForValue] - 1 ) * 2
   + ([self scaleCountOfXAxis] * 2)
-  + ([self scaleCountOfZAxis] * 2) ;
+  + ([self scaleCountOfZAxis] * 2);
 }
+
+/*!
+ *
+ * @return 値描画のための頂点数
+ */
+-(NSInteger) texturePositionInValueVertex {
+  //
+  return [self countValueVertex]
+  + [self countXYAxisVertex]
+  + [self countXZAxisVertex]
+  + [self countYZAxisVertex];
+}
+
 
 /*!
  * 値の描画
@@ -581,7 +739,7 @@ enum
 
   glLineWidth(1.0f);
 
-  int pos = first / 6;
+  int pos = first / VERTEX_ATTRIB_SIZE;
   for(int x =  self.source.xAxisMin; x <  self.source.xAxisMax; x +=  self.source.xAxisScaleForValue) {
     for(int z =  self.source.zAxisMin;
         z <  self.source.zAxisMax;
@@ -636,21 +794,25 @@ enum
   vertex[2] = -[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = -[self maxXOfChart];
   vertex[1] = -[self maxYOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = [self maxXOfChart];
   vertex[1] = [self maxYOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = [self maxXOfChart];
   vertex[1] = -[self maxYOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
   
   // Y軸線
   for(int y = [self.source yAxisMin];
@@ -661,10 +823,12 @@ enum
     vertex[2] = -[self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
 
     vertex[0] = [self maxXOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   // X軸線
   for(int x = [self.source xAxisMin];
@@ -675,10 +839,12 @@ enum
     vertex[2] = -[self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
 
     vertex[1] = [self maxYOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   return _vertexs.position;
 }
@@ -697,7 +863,7 @@ enum
  */
 -(void) drawXYAxisVertex:(NSInteger)first {
   
-  int pos = first / 6;
+  int pos = first / VERTEX_ATTRIB_SIZE;
   
   glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
   pos += 4;
@@ -730,21 +896,25 @@ enum
   vertex[2] = +[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[1] = -[self maxYOfChart];
   vertex[2] = -[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[1] = +[self maxYOfChart];
   vertex[2] = +[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[1] = +[self maxYOfChart];
   vertex[2] = -[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   // Y軸
   for(int y = [self.source yAxisMin];
@@ -755,10 +925,12 @@ enum
     vertex[2] = [self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
 
     vertex[2] = -[self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   
   // Z軸
@@ -770,10 +942,12 @@ enum
     vertex[2] = [self zAxisToPoint:z];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
     
     vertex[1] = [self maxYOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   return _vertexs.position;
 }
@@ -793,7 +967,7 @@ enum
  */
 -(void) drawYZAxisVertex:(NSInteger)first {
   
-  int pos = first / 6;
+  int pos = first / VERTEX_ATTRIB_SIZE;
   
   glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
   pos += 4;
@@ -826,21 +1000,25 @@ enum
   vertex[2] = +[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = -[self maxXOfChart];
   vertex[2] = -[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = +[self maxXOfChart];
   vertex[2] = +[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
 
   vertex[0] = +[self maxXOfChart];
   vertex[2] = -[self maxZOfChart];
   [_vertexs putValues:vertex count:3];
   [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+  [_vertexs advancePosition:TEXCOORDS_SIZE];
   
   // X軸
   for(int x = [self.source xAxisMin];
@@ -851,10 +1029,12 @@ enum
     vertex[2] = -[self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
 
     vertex[2] = +[self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   
   // Z軸
@@ -866,10 +1046,12 @@ enum
     vertex[2] = [self zAxisToPoint:z];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
-    
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
+   
     vertex[0] = [self maxXOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    [_vertexs advancePosition:TEXCOORDS_SIZE];
   }
   return _vertexs.position;
 }
@@ -889,7 +1071,7 @@ enum
  */
 -(void) drawXZAxisVertex:(NSInteger)first {
   
-  int pos = first / 6;
+  int pos = first / VERTEX_ATTRIB_SIZE;
   
   glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
   pos += 4;
@@ -907,6 +1089,186 @@ enum
     glDrawArrays(GL_LINES, pos , 2);
     pos += 2;
   }
+}
+
+/**
+ * X軸の値テキストを描画
+ * @param gl
+ */
+-(void) drawXAxisNames {
+  for(int x = [self.source xAxisMin] + [self.source xAxisScale];
+      x <= [self.source xAxisMax];
+      x += [self.source xAxisScale] ) {
+    
+    [self drawText:[self.source xAxisName:x]
+                 x:[self xAxisToPoint:x]
+                 y:-[self maxYOfChart]
+                 z:[self maxZOfChart]
+              font:[UIFont systemFontOfSize:[self scaleFontSize]]
+         textColor:self.textColor
+         pointLeft:YES
+       pointBottom:NO];
+  }
+  
+  //float ratio = (float)width / height;
+  
+  [self drawText:[self.source xAxisTitle]
+               x:-[self maxXOfChart] / 2.0f
+               y:-[self maxYOfChart] - [self pxHeightToOpenGLHeight:[self scaleFontSize]]
+               z:[self maxZOfChart]
+            font:[UIFont systemFontOfSize:[self scaleFontSize]]
+       textColor:self.textColor
+       pointLeft:YES
+     pointBottom:NO];
+}
+
+
+/**
+ * Y軸の値テキストを描画
+ * @param gl
+ */
+-(void) drawYAxisNames {
+  for(int y = [self.source yAxisMin];
+      y <= [self.source yAxisMax];
+      y += [self.source yAxisScale] ) {
+    
+    [self drawText:[self.source yAxisName:y]
+                 x:-[self maxXOfChart]
+                 y:[self yAxisToPoint:y]
+                 z:-[self maxZOfChart]
+              font:[UIFont systemFontOfSize:[self scaleFontSize]]
+         textColor:self.textColor
+         pointLeft:NO
+       pointBottom:YES];
+    [self drawText:[self.source yAxisName:y]
+                 x:[self maxXOfChart]
+                 y:[self yAxisToPoint:y]
+                 z:[self maxZOfChart]
+              font:[UIFont systemFontOfSize:[self scaleFontSize]]
+         textColor:self.textColor
+         pointLeft:YES
+       pointBottom:YES];
+  }
+  
+  //float ratio = (float)width / height;
+  
+  [self drawText:[self.source yAxisTitle]
+               x:-[self maxXOfChart] / 2.0f
+               y:[self maxYOfChart] + [self pxHeightToOpenGLHeight:[self scaleFontSize]]
+               z:-[self maxZOfChart]
+            font:[UIFont systemFontOfSize:[self scaleFontSize]]
+       textColor:self.textColor
+       pointLeft:YES
+     pointBottom:YES];
+}
+
+
+
+/**
+ * Z軸の値テキストを描画
+ * @param gl
+ */
+-(void) drawZAxisNames {
+  for(int z = [self.source zAxisMin];
+      z <= [self.source zAxisMax];
+      z += [self.source zAxisScale] ) {
+    
+    [self drawText:[self.source zAxisName:z]
+                 x:-[self maxXOfChart]
+                 y:-[self maxYOfChart]
+                 z:[self zAxisToPoint:z]
+              font:[UIFont systemFontOfSize:[self scaleFontSize]]
+         textColor:self.textColor
+         pointLeft:NO
+       pointBottom:NO];
+  }
+  
+  //float ratio = (float)width / height;
+  
+  [self drawText:[self.source zAxisTitle]
+               x:-[self maxXOfChart] + [self pxWidthToOpenGLWidth:[self scaleFontSize]]
+               y:-[self maxYOfChart] - [self pxHeightToOpenGLHeight:[self scaleFontSize]]
+               z:-[self maxZOfChart] / 2.0f
+            font:[UIFont systemFontOfSize:[self scaleFontSize]]
+       textColor:self.textColor
+       pointLeft:YES
+     pointBottom:YES];
+}
+
+
+/*!
+ * 指定したテキストを描画する
+ * @param gl
+ * @param text 描画テキスト
+ * @param x 描画位置-openglの座標 -x
+ * @param y 描画位置-openglの座標 -y
+ * @param z 描画位置-openglの座標 -z
+ * @param font フォント
+ * @param pointLeft 指定座標を文字出力の左側で行うならtrue
+ * @param pointBottom 指定座標を文字出力のBottom側で行うならtrue
+ */
+- (void) drawText:(NSString *)text x:(CGFloat)x y:(CGFloat)y z:(CGFloat)z
+             font:(UIFont *)font textColor:(UIColor *)textColor
+            pointLeft:(BOOL)pointLeft pointBottom:(BOOL)pointBottom {
+
+  float margin = 0.0f;
+  // テキストのビットマップを生成してOpenGLへ
+  TextImage *textImage = [[TextImage alloc] init];
+  textImage.font = font;
+  textImage.color = textColor;
+  CGSize size = [textImage textSize:text];
+  CGFloat tw = [textImage textWidth:text];
+  Byte *pixels =  [textImage drawStringToTexture:text];
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0,
+               GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+  //
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  
+  NSInteger bmpWidth = [textImage textSize:text].width;
+  float w = [self pxWidthToOpenGLWidth:bmpWidth];
+  float textWidth = [self pxWidthToOpenGLWidth:tw];
+  float xMergin = [self pxWidthToOpenGLWidth:font.lineHeight * margin];
+  float h = [self pxHeightToOpenGLHeight:font.lineHeight * (1.0f + margin) ];
+  float left = pointLeft ? x + xMergin : x - textWidth - xMergin;
+  float right = left + w;
+  float bottom = (pointBottom ? y : y - h) ;
+  float top = bottom + h;
+  CGFloat  vertex [] =  {
+    left, top, z,
+    left, bottom, z,
+    right, top, z,
+    right, bottom, z
+  };
+  CGFloat  uv[] = {
+    0.0f, 1.0f,
+    0.0f, ((float)(bmpWidth - font.lineHeight * (1.0f + margin)) / bmpWidth),
+    1.0f, 1.0f,
+    1.0f, ((float)(bmpWidth - font.lineHeight * (1.0f + margin)) / bmpWidth),
+  };
+  //頂点配列の指定
+  NSInteger pos =[self texturePositionInValueVertex] * VERTEX_ATTRIB_SIZE ;
+  _vertexs.position = [self texturePositionInValueVertex] * VERTEX_ATTRIB_SIZE ;
+  for(int i = 0; i < 4; ++i) {
+    [_vertexs putValue:vertex[i * 3]];
+    [_vertexs putValue:vertex[i * 3 + 1]];
+    [_vertexs putValue:vertex[i * 3 + 2]];
+    [_vertexs advancePosition:VERTEX_COLOR_SIZE];
+    [_vertexs putValue:uv[i*2]];
+    [_vertexs putValue:uv[i*2+1]];
+  }
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  sizeof(CGFloat) * pos,
+                  4 * VERTEX_ATTRIB_SIZE * sizeof(CGFloat),
+                  _vertexs.array + ( [self texturePositionInValueVertex] * VERTEX_ATTRIB_SIZE));
+  //
+  glDrawArrays(GL_TRIANGLE_STRIP, [self texturePositionInValueVertex], 4);
+  [textImage releaseImage];
+
 }
 
 
@@ -1010,36 +1372,64 @@ enum
  * @return Z軸の目盛り数
  */
 - (NSInteger) scaleCountOfZAxis {
-  return self.source.zAxisMax - self.source.zAxisMin / self.source.zAxisScale + 1;
+  return (self.source.zAxisMax - self.source.zAxisMin) / self.source.zAxisScale + 1;
 }
 
 /*!
  * @return Z軸の目盛り数
  */
 - (NSInteger) scaleCountOfZAxisForValue {
-  return self.source.zAxisMax - self.source.zAxisMin / self.source.zAxisScaleForValue + 1;
+  return (self.source.zAxisMax - self.source.zAxisMin) / self.source.zAxisScaleForValue + 1;
 }
 
 /*!
  * @return X軸の目盛り数
  */
 - (NSInteger) scaleCountOfXAxisForValue {
-  return self.source.xAxisMax - self.source.xAxisMin / self.source.xAxisScaleForValue + 1;
+  return (self.source.xAxisMax - self.source.xAxisMin) / self.source.xAxisScaleForValue + 1;
 }
 
 /*!
  * @return X軸の目盛り数
  */
 - (NSInteger) scaleCountOfXAxis {
-  return self.source.xAxisMax - self.source.xAxisMin / self.source.xAxisScale + 1;
+  return (self.source.xAxisMax - self.source.xAxisMin) / self.source.xAxisScale + 1;
 }
 
 /*!
  * @return Y軸の目盛り数
  */
 - (NSInteger) scaleCountOfYAxis {
-  return self.source.yAxisMax - self.source.yAxisMin / self.source.yAxisScale + 1;
+  return (self.source.yAxisMax - self.source.yAxisMin) / self.source.yAxisScale + 1;
 }
+
+/*!
+ * 幅のpx値からのopenGL座標の大きさへ変換
+ * @param px 幅のpx値
+ * @return openGL座標での大きさ
+ */
+- (CGFloat) pxWidthToOpenGLWidth:(CGFloat) px {
+  return [self aspect] * 2.0f / (float)[self width] * px;
+}
+
+/*!
+ * 高さのpx値からのopenGL座標の大きさへ変換
+ * @param px 高さのpx値
+ * @return  openGL座標での大きさ
+ */
+- (CGFloat) pxHeightToOpenGLHeight:(CGFloat) px {
+  return (2.0f / (float)[self height]) * px;
+}
+
+/*!
+ * 奥行きのpx値からのopenGL座標の大きさへ変換
+ * @param px 奥行きのpx値
+ * @return  openGL座標での大きさ
+ */
+- (CGFloat) pxDepthToOpenGLDepth:(CGFloat)px {
+  return [self maxZOfChart] * 2 / [self height] * px;
+}
+
 
 #pragma mark Private
 
@@ -1060,7 +1450,9 @@ enum
   _valueLineColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
   _textBackgroundColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
   
-  _scaleFontSize = 24;
+  _textColor = [UIColor blackColor];
+  
+  _scaleFontSize = 14;
   _titleFontSize = 26;
   _scaleFontColor = [UIColor whiteColor];
   _titleFontColor = [UIColor whiteColor];
