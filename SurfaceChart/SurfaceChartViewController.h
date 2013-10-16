@@ -135,6 +135,11 @@
 /*!
  * 枠の背景色
  */
+@property (nonatomic, strong) GLColor *frameBackgroundColor;
+
+/*!
+ * 枠の背景色
+ */
 @property (nonatomic, strong) GLColor *bottomFrameBackgroundColor;
 
 /*!

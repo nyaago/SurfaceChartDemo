@@ -32,7 +32,6 @@
 }
 
 - (void) putValues:(CGFloat [])values count:(NSInteger)count {
-//  *(_array + _position) = value;
   memcpy(_array + _position, values, sizeof(CGFloat) * count);
   _position += count;
 }

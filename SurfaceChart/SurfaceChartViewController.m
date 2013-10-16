@@ -40,7 +40,6 @@ enum
   
   GLKMatrix4 _modelViewProjectionMatrix;
   GLKMatrix3 _normalMatrix;
-  float _rotation;
   
   GLuint _vertexArray;
   GLuint _vertexBuffer;
@@ -163,7 +162,6 @@ enum
   self.effect.light0.enabled = GL_TRUE;
   self.effect.light0.diffuseColor = GLKVector4Make(1.0f, 0.4f, 0.4f, 1.0f);
   */
-  glEnable(GL_DEPTH_TEST);
   glEnable(GL_COLOR_ARRAY);
   
   glGenVertexArraysOES(1, &_vertexArray);
@@ -235,7 +233,7 @@ enum
   
   _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, modelViewMatrix);
   
-  _rotation += self.timeSinceLastUpdate * 0.5f;
+  //_rotation += self.timeSinceLastUpdate * 0.5f;
   // @TODO - ピンチ中は..Pauseしない..
   self.paused = YES;
 }
@@ -253,7 +251,7 @@ enum
   // Render the object with GLKit
   // [self.effect prepareToDraw];
   
-  [self drawVertexArray];
+//  [self drawVertexArray];
   
   // Render the object again with ES2
   glUseProgram(_program);
@@ -421,11 +419,21 @@ enum
 #pragma mark Drawing
 
 - (void) addVertex {
+  _vertexs.position = 0;
+  _firstOfXYAxis = 0;
+  _firstOfYZAxis = [self addXYAxisVertex];
+  _firstOfXZAxis = [self addYZAxisVertex];
+  _firstOfValue = [self addXZAxisVertex];
   [self addValueVertex];
 }
 
 - (void) drawVertexArray {
-  [self drawValueVertex:0];
+  glDisable(GL_DEPTH_TEST);
+  [self drawXYAxisVertex:_firstOfXYAxis];
+  [self drawYZAxisVertex:_firstOfYZAxis];
+  [self drawXZAxisVertex:_firstOfXZAxis];
+  glEnable(GL_DEPTH_TEST);
+  [self drawValueVertex:_firstOfValue];
 }
 
 /*!
@@ -435,7 +443,7 @@ enum
 /*!
  * 値部分描画の頂点バッファ生成
  */
--(void) addValueVertex {
+-(NSInteger) addValueVertex {
   
   float vertex[3];
   int y;
@@ -549,6 +557,7 @@ enum
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
   }
+  return _vertexs.position;
 }
 
 /*!
@@ -569,12 +578,10 @@ enum
  * @param first 対応する頂点が納めされている頂点バッファ上のoffset
  */
 -(void) drawValueVertex:(NSInteger)  first {
-  //gl.glLineWidth( 2 );
-  //gl.glColor4f(0.0f, 0.0f, 1.0f, 0.0f);
 
-//  glPushMatrix();
-  
-  int pos = first / 3;
+  glLineWidth(1.0f);
+
+  int pos = first / 6;
   for(int x =  self.source.xAxisMin; x <  self.source.xAxisMax; x +=  self.source.xAxisScaleForValue) {
     for(int z =  self.source.zAxisMin;
         z <  self.source.zAxisMax;
@@ -584,8 +591,6 @@ enum
       pos += 4;
     }
   }
-  glPopMatrix();
-  glPushMatrix();
   
   for(int x =  self.source.xAxisMin; x < self.source.xAxisMax; x +=  self.source.xAxisScaleForValue) {
     for(int z = self.source.zAxisMin;
@@ -615,11 +620,294 @@ enum
     glDrawArrays(GL_LINES, pos , 2);
     pos += 2;
   }
-  //gl.glDisable(GL10.GL_DEPTH_TEST);
-//  glPopMatrix();
+  //glDisable(GL_DEPTH_TEST);
+}
+
+/*!
+ * XY軸の枠の頂点バッファ生成
+ * @return バッファの最後の位置
+ */
+-(NSInteger) addXYAxisVertex {
+  CGFloat vertex[3];
+  
+  // 枠
+  vertex[0] = -[self maxXOfChart];
+  vertex[1] = [self maxYOfChart];
+  vertex[2] = -[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = -[self maxXOfChart];
+  vertex[1] = -[self maxYOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = [self maxXOfChart];
+  vertex[1] = [self maxYOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = [self maxXOfChart];
+  vertex[1] = -[self maxYOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+  
+  // Y軸線
+  for(int y = [self.source yAxisMin];
+      y <= [self.source yAxisMax];
+      y += [self.source yAxisScale] ) {
+    vertex[0] = -[self maxXOfChart];
+    vertex[1] = [self yAxisToPoint:y];
+    vertex[2] = -[self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+
+    vertex[0] = [self maxXOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  // X軸線
+  for(int x = [self.source xAxisMin];
+      x <= [self.source xAxisMax];
+      x += [self.source xAxisScale]) {
+    vertex[0] = [self xAxisToPoint:x];
+    vertex[1] = -[self maxYOfChart];
+    vertex[2] = -[self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+
+    vertex[1] = [self maxYOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  return _vertexs.position;
+}
+
+/*!
+ * @return XY軸の枠領域の頂点数
+ */
+-(NSInteger) countXYAxisVertex {
+  // X軸 * 2 + Y軸 * 2 + 4（枠の四角形）
+  return [self scaleCountOfXAxis] * 2 + [self scaleCountOfYAxis] * 2 + 4;
+}
+
+/*!
+ * XY軸の枠領域の描画
+ * @param first 対応する頂点が納めされている頂点バッファ上のoffset
+ */
+-(void) drawXYAxisVertex:(NSInteger)first {
+  
+  int pos = first / 6;
+  
+  glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
+  pos += 4;
+  
+  for(int y = [self.source yAxisMin];
+      y <= [self.source yAxisMax];
+      y += [self.source yAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+    
+  }
+  for(int x = [self.source xAxisMin];
+      x <= [self.source xAxisMax];
+      x += [self.source xAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+  }
+}
+
+/**
+ * YZ軸の枠の頂点バッファ生成
+ * @return バッファの最後の位置
+ */
+-(NSInteger) addYZAxisVertex {
+  CGFloat vertex[3];
+  
+  // 枠
+  vertex[0] = [self maxXOfChart];
+  vertex[1] = -[self maxYOfChart];
+  vertex[2] = +[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[1] = -[self maxYOfChart];
+  vertex[2] = -[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[1] = +[self maxYOfChart];
+  vertex[2] = +[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  vertex[1] = +[self maxYOfChart];
+  vertex[2] = -[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.frameBackgroundColor rgbArray] count:3];
+
+  // Y軸
+  for(int y = [self.source yAxisMin];
+      y <= [self.source yAxisMax];
+      y += [self.source yAxisScale]) {
+    vertex[0] = [self maxXOfChart];
+    vertex[1] = [self yAxisToPoint:y];
+    vertex[2] = [self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+
+    vertex[2] = -[self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  
+  // Z軸
+  for(int z = [self.source zAxisMin];
+      z <= [self.source zAxisMax];
+      z += [self.source zAxisScale]) {
+    vertex[0] = [self maxXOfChart];
+    vertex[1] = -[self maxYOfChart];
+    vertex[2] = [self zAxisToPoint:z];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    
+    vertex[1] = [self maxYOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  return _vertexs.position;
+}
+
+/*!
+ *
+ * @return YZ軸の枠領域の頂点数
+ */
+-(NSInteger) countYZAxisVertex {
+  // Y軸 * 2 + Z軸 * 2 + 4（枠の四角形）
+  return [self scaleCountOfYAxis] * 2 + [self scaleCountOfZAxis] * 2 + 4;
+}
+
+/*!
+ * YZ軸の枠領域の描画
+ * @param first 対応する頂点が納めされている頂点バッファ上のoffset
+ */
+-(void) drawYZAxisVertex:(NSInteger)first {
+  
+  int pos = first / 6;
+  
+  glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
+  pos += 4;
+  
+  for(int y = [self.source yAxisMin];
+      y <= [self.source yAxisMax];
+      y += [self.source yAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+  }
+  for(int z = [self.source zAxisMin];
+      z <= [self.source zAxisMax];
+      z += [self.source zAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+  }
 }
 
 
+/*!
+ * XZ軸の枠の頂点バッファ生成
+ * @return バッファの最後の位置
+ */
+-(NSInteger) addXZAxisVertex {
+  CGFloat vertex[3];
+  
+  // 枠
+  vertex[0] = -[self maxXOfChart];
+  vertex[1] = -[self maxYOfChart];
+  vertex[2] = +[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = -[self maxXOfChart];
+  vertex[2] = -[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = +[self maxXOfChart];
+  vertex[2] = +[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+
+  vertex[0] = +[self maxXOfChart];
+  vertex[2] = -[self maxZOfChart];
+  [_vertexs putValues:vertex count:3];
+  [_vertexs putValues:[self.bottomFrameBackgroundColor rgbArray] count:3];
+  
+  // X軸
+  for(int x = [self.source xAxisMin];
+      x <= [self.source xAxisMax];
+      x += [self.source xAxisScale]) {
+    vertex[0] = [self  xAxisToPoint:x];
+    vertex[1] = -[self maxYOfChart];
+    vertex[2] = -[self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+
+    vertex[2] = +[self maxZOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  
+  // Z軸
+  for(int z = [self.source zAxisMin];
+      z <= [self.source zAxisMax];
+      z += [self.source zAxisScale]) {
+    vertex[0] = -[self maxXOfChart];
+    vertex[1] = -[self maxYOfChart];
+    vertex[2] = [self zAxisToPoint:z];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+    
+    vertex[0] = [self maxXOfChart];
+    [_vertexs putValues:vertex count:3];
+    [_vertexs putValues:[self.frameLineColor rgbArray] count:3];
+  }
+  return _vertexs.position;
+}
+
+/*!
+ * @return XZ軸の枠領域の頂点数
+ */
+-(NSInteger) countXZAxisVertex {
+  // X軸 * 2 + Z軸 * 2 + 4（枠の四角形）
+  return [self scaleCountOfXAxis] * 2 + [self scaleCountOfZAxis] * 2 + 4;
+}
+
+/**
+ * XZ軸の枠領域の描画
+ * @param gl
+ * @param first 対応する頂点が納めされている頂点バッファ上のoffset
+ */
+-(void) drawXZAxisVertex:(NSInteger)first {
+  
+  int pos = first / 6;
+  
+  glDrawArrays(GL_TRIANGLE_STRIP, pos, 4);
+  pos += 4;
+  
+  for(int x = [self.source xAxisMin];
+      x <= [self.source xAxisMax];
+      x += [self.source xAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+    
+  }
+  for(int z = [self.source zAxisMin];
+      z <= [self.source zAxisMax];
+      z += [self.source zAxisScale]) {
+    glDrawArrays(GL_LINES, pos , 2);
+    pos += 2;
+  }
+}
 
 
 #pragma mark Private Functions
@@ -763,10 +1051,12 @@ enum
   _rarioToRenderZ = 0.85f;
   _ratioToRenderZHor = 0.75f;
   
+  _frameBackgroundColor = [[GLColor alloc]
+                           initWithRed:170.0f/255.0f green:170.0f/255.0f blue:170.0f/255.0f];
   _bottomFrameBackgroundColor = [[GLColor alloc]
-                                 initWithRed:170.0f/255.0f green:170.0f/255.0f blue:170.0f/255.0f];
+                                 initWithRed:204.0f/255.0f green:204.0f/255.0f blue:204.0f/255.0f];
   _frameLineColor = [[GLColor alloc]
-                     initWithRed:255.0f/255.0f green:170.255f/255.0f blue:255.0f/255.0f];
+                     initWithRed:255.0f/255.0f green:255.0f/255.0f blue:255.0f/255.0f];
   _valueLineColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
   _textBackgroundColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
   
