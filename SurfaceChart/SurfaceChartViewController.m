@@ -71,25 +71,23 @@ enum
   NSInteger _firstOfValue;
 
   NSInteger _firstOfTexture;
-  /*!
-   * X軸での回転角度
-   */
-  CGFloat _rotateByAngelX;
-  
-  /*!
-   * Y軸での回転角度
-   */
-  CGFloat _rotateByAngelY;
-
-  
-  
 }
 
 
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) GLKBaseEffect *effect;
+@property (strong, nonatomic) UIPanGestureRecognizer *panGestureRecognizer;
+/*!
+ * X軸での回転角度
+ */
+@property (nonatomic) CGFloat rotateByAngelX;
+/*!
+ * Y軸での回転角度
+ */
+@property (nonatomic) CGFloat rotateByAngelY;
 
-
+@property (nonatomic, readonly) NSInteger width;
+@property (nonatomic, readonly) NSInteger height;
 
 - (void)setupGL;
 - (void)tearDownGL;
@@ -99,6 +97,9 @@ enum
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
 - (BOOL)linkProgram:(GLuint)prog;
 - (BOOL)validateProgram:(GLuint)prog;
+
+- (void) handlePanGesture:(id)sender;
+
 @end
 
 @implementation SurfaceChartViewController
@@ -106,6 +107,7 @@ enum
 - (id) init {
   self = [super init];
   if(self) {
+    [self initObjects];
     [self setDefault];
   }
   return self;
@@ -123,7 +125,7 @@ enum
                              + [self countYZAxisVertex]
                              + 4)
                             * VERTEX_ATTRIB_SIZE * 4];
-  
+  [self.view addGestureRecognizer:self.panGestureRecognizer];
   self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
   if (!self.context) {
@@ -214,6 +216,7 @@ enum
   
   glDeleteBuffers(1, &_vertexBuffer);
   glDeleteVertexArraysOES(1, &_vertexArray);
+  glDeleteTextures(1, &_texture);
   
   self.effect = nil;
   
@@ -268,9 +271,6 @@ enum
 {
   glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//glEnable(GL_BLEND);
-//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glBindVertexArrayOES(_vertexArray);
 
@@ -455,7 +455,10 @@ enum
     GLint status;
     const GLchar *source;
     
-    source = (GLchar *)[[NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil] UTF8String];
+    source = (GLchar *)[[NSString stringWithContentsOfFile:file
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:nil]
+                        UTF8String];
     if (!source) {
       NSLog(@"Failed to load vertex shader");
       return NO;
@@ -580,7 +583,9 @@ enum
   int y;
   
   // === color fill する triangle ===
-  for(int x = self.source.xAxisMin; x < self.source.xAxisMax; x += self.source.xAxisScaleForValue) {
+  for(int x = self.source.xAxisMin;
+      x < self.source.xAxisMax;
+      x += self.source.xAxisScaleForValue) {
     for(int z = self.source.zAxisMin;
         z < self.source.zAxisMax;
         z += self.source.zAxisScaleForValue) {
@@ -1110,8 +1115,6 @@ enum
        pointBottom:NO];
   }
   
-  //float ratio = (float)width / height;
-  
   [self drawText:[self.source xAxisTitle]
                x:-[self maxXOfChart] / 2.0f
                y:-[self maxYOfChart] - [self pxHeightToOpenGLHeight:[self scaleFontSize]]
@@ -1150,8 +1153,6 @@ enum
        pointBottom:YES];
   }
   
-  //float ratio = (float)width / height;
-  
   [self drawText:[self.source yAxisTitle]
                x:-[self maxXOfChart] / 2.0f
                y:[self maxYOfChart] + [self pxHeightToOpenGLHeight:[self scaleFontSize]]
@@ -1182,8 +1183,6 @@ enum
          pointLeft:NO
        pointBottom:NO];
   }
-  
-  //float ratio = (float)width / height;
   
   [self drawText:[self.source zAxisTitle]
                x:-[self maxXOfChart] + [self pxWidthToOpenGLWidth:[self scaleFontSize]]
@@ -1430,8 +1429,41 @@ enum
   return [self maxZOfChart] * 2 / [self height] * px;
 }
 
+#pragma mark Handlers
+
+- (void) handlePanGesture:(id)sender {
+  UIPanGestureRecognizer *pan = (UIPanGestureRecognizer*)sender;
+  CGPoint point = [pan translationInView:self.view];
+  CGPoint velocity = [pan velocityInView:self.view];
+#if defined(DEBUG)
+  NSLog(@"pan. translation: %@, velocity: %@",
+        NSStringFromCGPoint(point), NSStringFromCGPoint(velocity));
+//  [[NSThread currentThread]
+#endif
+#if defined(DEBUG)
+  NSLog(@"before rotation x ,y -> %f / %f", self.rotateByAngelX, self.rotateByAngelY);
+#endif
+  self.rotateByAngelY += ((point.x / self.width)  / M_PI / 2);
+  self.rotateByAngelX += ((point.y / self.height)  / M_PI / 2);
+#if defined(DEBUG)
+  NSLog(@"after rotation x ,y -> %f / %f", self.rotateByAngelX, self.rotateByAngelY);
+#endif
+  self.paused = NO;
+}
+
+#pragma mark Private Properties
+
+- (UIPanGestureRecognizer *) panGestureRecognizer {
+  _panGestureRecognizer = [[UIPanGestureRecognizer alloc]
+                           initWithTarget:self
+                           action:@selector(handlePanGesture:)];
+  return _panGestureRecognizer;
+}
 
 #pragma mark Private
+
+- (void) initObjects {
+}
 
 - (void) setDefault {
   _rarioToRenderX = 0.65f;
