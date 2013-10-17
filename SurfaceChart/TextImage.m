@@ -83,8 +83,8 @@
     CGImageRelease(_image);
     _image = NULL;
     free(_bitmapBuffer);
-    _bitmapContext = NULL;
     CGContextRelease(_bitmapContext);
+    _bitmapContext = NULL;
   }
   
 }
