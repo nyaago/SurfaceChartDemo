@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7231BB03181766E200AF54EB /* ShaderLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 7231BB02181766E200AF54EB /* ShaderLoader.m */; };
 		72894D53180E596300CED4CF /* TextImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 72894D52180E596300CED4CF /* TextImage.m */; };
 		72894D54180E88A800CED4CF /* TextureShader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F72716180D264E003DC48D /* TextureShader.fsh */; };
 		72894D55180E88A800CED4CF /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F72710180D116C003DC48D /* Shader.fsh */; };
@@ -47,6 +48,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7231BB01181766E200AF54EB /* ShaderLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderLoader.h; sourceTree = "<group>"; };
+		7231BB02181766E200AF54EB /* ShaderLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShaderLoader.m; sourceTree = "<group>"; };
 		72894D51180E596300CED4CF /* TextImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextImage.h; sourceTree = "<group>"; };
 		72894D52180E596300CED4CF /* TextImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextImage.m; sourceTree = "<group>"; };
 		72F726D0180CCDE8003DC48D /* SurfaceChartDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SurfaceChartDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -195,6 +198,8 @@
 		72F72714180D2537003DC48D /* SurfaceChart */ = {
 			isa = PBXGroup;
 			children = (
+				7231BB01181766E200AF54EB /* ShaderLoader.h */,
+				7231BB02181766E200AF54EB /* ShaderLoader.m */,
 				72F72715180D256B003DC48D /* Shaders */,
 				72F726F0180CCDE9003DC48D /* SurfaceChartViewController.h */,
 				72F726F1180CCDE9003DC48D /* SurfaceChartViewController.m */,
@@ -332,6 +337,7 @@
 				72F7271A180D2ADC003DC48D /* SurfaceChartDemoDataSource.m in Sources */,
 				72F7271D180D3B4B003DC48D /* GLColor.m in Sources */,
 				72F726E4180CCDE9003DC48D /* main.m in Sources */,
+				7231BB03181766E200AF54EB /* ShaderLoader.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

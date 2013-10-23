@@ -9,6 +9,7 @@
 #import "SurfaceChartViewController.h"
 #import "FloatArray.h"
 #import "TextImage.h"
+#import "ShaderLoader.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -76,6 +77,9 @@ enum
 
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) GLKBaseEffect *effect;
+@property (strong, nonatomic) ShaderLoader *shaderLoader;
+@property (strong, nonatomic) ShaderLoader *textureShaderLoader;
+
 @property (strong, nonatomic) UIPanGestureRecognizer *panGestureRecognizer;
 /*!
  * X軸での回転角度
@@ -94,9 +98,6 @@ enum
 
 - (BOOL)loadShaders;
 - (BOOL)loadTextureShaders;
-- (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
-- (BOOL)linkProgram:(GLuint)prog;
-- (BOOL)validateProgram:(GLuint)prog;
 
 - (void) handlePanGesture:(id)sender;
 
@@ -109,6 +110,8 @@ enum
   if(self) {
     [self initObjects];
     [self setDefault];
+    self.shaderLoader = [[ShaderLoader alloc] init];
+    self.textureShaderLoader = [[ShaderLoader alloc] init];
   }
   return self;
 }
@@ -306,58 +309,18 @@ enum
 
 - (BOOL)loadShaders
 {
-  GLuint vertShader, fragShader;
-  NSString *vertShaderPathname, *fragShaderPathname;
-  
   // Create shader program.
-  _program = glCreateProgram();
-  
-  // Create and compile vertex shader.
-  vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"vsh"];
-  if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname]) {
-      NSLog(@"Failed to compile vertex shader");
-      return NO;
-  }
-  
-  // Create and compile fragment shader.
-  fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"fsh"];
-  if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname]) {
-      NSLog(@"Failed to compile fragment shader");
-      return NO;
-  }
-  
-  // Attach vertex shader to program.
-  glAttachShader(_program, vertShader);
-  
-  // Attach fragment shader to program.
-  glAttachShader(_program, fragShader);
-  
+  _program = [self.shaderLoader loadShaders:@"Shader"];
   // Bind attribute locations.
   // This needs to be done prior to linking.
   glBindAttribLocation(_program, GLKVertexAttribPosition, "position");
-  glBindAttribLocation(_program, GLKVertexAttribNormal, "normal");
-
+  //  glBindAttribLocation(_program, GLKVertexAttribNormal, "normal");
   glBindAttribLocation(_program, GLKVertexAttribColor, "color");
-  glBindAttribLocation(_program, GLKVertexAttribTexCoord0, "texcoord");
-
+  
   // Link program.
-  if (![self linkProgram:_program]) {
-      NSLog(@"Failed to link program: %d", _program);
-      
-      if (vertShader) {
-          glDeleteShader(vertShader);
-          vertShader = 0;
-      }
-      if (fragShader) {
-          glDeleteShader(fragShader);
-          fragShader = 0;
-      }
-      if (_program) {
-          glDeleteProgram(_program);
-          _program = 0;
-      }
-      
-      return NO;
+  if (![self.shaderLoader linkProgram]) {
+    NSLog(@"Failed to link program: %d", self.shaderLoader.program);
+    return NO;
   }
   
   // Get uniform locations.
@@ -365,173 +328,35 @@ enum
   uniforms[UNIFORM_NORMAL_MATRIX] = glGetUniformLocation(_program, "normalMatrix");
   
   // Release vertex and fragment shaders.
-  if (vertShader) {
-    glDetachShader(_program, vertShader);
-    glDeleteShader(vertShader);
-  }
-  if (fragShader) {
-    glDetachShader(_program, fragShader);
-    glDeleteShader(fragShader);
-  }
-  
+  [self.shaderLoader releaseShaders];
   return YES;
 }
 
 - (BOOL)loadTextureShaders
 {
-  GLuint vertShader, fragShader;
-  NSString *vertShaderPathname, *fragShaderPathname;
-  
   // Create shader program.
-  _textureProgram = glCreateProgram();
-  // Create and compile fragment shader.
-  fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"TextureShader" ofType:@"fsh"];
-  if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname]) {
-    NSLog(@"Failed to compile fragment shader");
-    return NO;
-  }
-
-
-  // Create and compile vertex shader.
-  vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"TextureShader" ofType:@"vsh"];
-  if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname]) {
-    NSLog(@"Failed to compile vertex shader");
-    return NO;
-  }
-
-  // Attach vertex shader to program.
-  glAttachShader(_textureProgram, vertShader);
-  
-  // Attach fragment shader to program.
-  glAttachShader(_textureProgram, fragShader);
-  
+  _textureProgram = [self.textureShaderLoader loadShaders:@"TextureShader"];
   // Bind attribute locations.
   // This needs to be done prior to linking.
   glBindAttribLocation(_textureProgram, GLKVertexAttribPosition, "position");
-  glBindAttribLocation(_textureProgram, GLKVertexAttribNormal, "normal");
+  //  glBindAttribLocation(_textureProgram, GLKVertexAttribNormal, "normal");
   glBindAttribLocation(_textureProgram, GLKVertexAttribTexCoord0, "texcoord");
-//  glBindAttribLocation(_textureProgram, ATTRIB_TEXCOORD, "texcoord" );
+  
   // Link program.
-  if (![self linkProgram:_textureProgram]) {
-    NSLog(@"Failed to link program: %d", _textureProgram);
-    
-    if (vertShader) {
-      glDeleteShader(vertShader);
-      vertShader = 0;
-    }
-    if (fragShader) {
-      glDeleteShader(fragShader);
-      fragShader = 0;
-    }
-    if (_textureProgram) {
-      glDeleteProgram(_textureProgram);
-      _textureProgram = 0;
-    }
-    
+  if (![self.textureShaderLoader linkProgram]) {
+    NSLog(@"Failed to link program: %d", self.shaderLoader.program);
     return NO;
   }
   
   // Get uniform locations.
-  uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_textureProgram,
-                                                                      "modelViewProjectionMatrix");
+  uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_textureProgram, "modelViewProjectionMatrix");
   uniforms[UNIFORM_NORMAL_MATRIX] = glGetUniformLocation(_textureProgram, "normalMatrix");
-
+  
   // Release vertex and fragment shaders.
-  if (vertShader) {
-    glDetachShader(_textureProgram, vertShader);
-    glDeleteShader(vertShader);
-  }
-  if (fragShader) {
-    glDetachShader(_textureProgram, fragShader);
-    glDeleteShader(fragShader);
-  }
-  
+  [self.textureShaderLoader releaseShaders];
   return YES;
 }
 
-
-- (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file
-{
-    GLint status;
-    const GLchar *source;
-    
-    source = (GLchar *)[[NSString stringWithContentsOfFile:file
-                                                  encoding:NSUTF8StringEncoding
-                                                     error:nil]
-                        UTF8String];
-    if (!source) {
-      NSLog(@"Failed to load vertex shader");
-      return NO;
-    }
-    
-    *shader = glCreateShader(type);
-    glShaderSource(*shader, 1, &source, NULL);
-    glCompileShader(*shader);
-    
-#if defined(DEBUG)
-    GLint logLength;
-    glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
-      GLchar *log = (GLchar *)malloc(logLength);
-      glGetShaderInfoLog(*shader, logLength, &logLength, log);
-      NSLog(@"Shader compile log:\n%s", log);
-      free(log);
-    }
-#endif
-    
-    glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
-    if (status == 0) {
-      glDeleteShader(*shader);
-      return NO;
-    }
-    
-    return YES;
-}
-
-- (BOOL)linkProgram:(GLuint)prog
-{
-    GLint status;
-    glLinkProgram(prog);
-    
-#if defined(DEBUG)
-    GLint logLength;
-    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
-      GLchar *log = (GLchar *)malloc(logLength);
-      glGetProgramInfoLog(prog, logLength, &logLength, log);
-      NSLog(@"Program link log:\n%s", log);
-      free(log);
-    }
-#endif
-    
-    glGetProgramiv(prog, GL_LINK_STATUS, &status);
-    if (status == 0) {
-        return NO;
-    }
-    
-    return YES;
-}
-
-- (BOOL)validateProgram:(GLuint)prog
-{
-  GLint logLength, status;
-  
-  glValidateProgram(prog);
-  glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
-  if (logLength > 0) {
-    GLchar *log = (GLchar *)malloc(logLength);
-    glGetProgramInfoLog(prog, logLength, &logLength, log);
-    NSLog(@"Program validate log:\n%s", log);
-    free(log);
-  }
-  
-  glGetProgramiv(prog, GL_VALIDATE_STATUS, &status);
-  if (status == 0) {
-    return NO;
-  }
-  
-  return YES;
-}
 
 #pragma mark Drawing
 
@@ -1077,9 +902,8 @@ enum
   return [self scaleCountOfXAxis] * 2 + [self scaleCountOfZAxis] * 2 + 4;
 }
 
-/**
+/*!
  * XZ軸の枠領域の描画
- * @param gl
  * @param first 対応する頂点が納めされている頂点バッファ上のoffset
  */
 -(void) drawXZAxisVertex:(NSInteger)first {
@@ -1104,9 +928,8 @@ enum
   }
 }
 
-/**
+/*!
  * X軸の値テキストを描画
- * @param gl
  */
 -(void) drawXAxisNames {
   for(int x = [self.source xAxisMin] + [self.source xAxisScale];
@@ -1134,9 +957,8 @@ enum
 }
 
 
-/**
+/*!
  * Y軸の値テキストを描画
- * @param gl
  */
 -(void) drawYAxisNames {
   for(int y = [self.source yAxisMin];
@@ -1173,9 +995,8 @@ enum
 
 
 
-/**
+/*!
  * Z軸の値テキストを描画
- * @param gl
  */
 -(void) drawZAxisNames {
   for(int z = [self.source zAxisMin];
@@ -1205,7 +1026,6 @@ enum
 
 /*!
  * 指定したテキストを描画する
- * @param gl
  * @param text 描画テキスト
  * @param x 描画位置-openglの座標 -x
  * @param y 描画位置-openglの座標 -y

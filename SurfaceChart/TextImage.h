@@ -15,6 +15,7 @@
 
 @property (nonatomic, strong) UIFont *font;
 @property (nonatomic, strong) UIColor *color;
+@property (nonatomic, strong) UIColor *backgroundColor;
 
 - (CGFloat) textWidth:(NSString *)text;
 - (CGSize) textSize:(NSString *)text;

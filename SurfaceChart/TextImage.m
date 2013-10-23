@@ -20,6 +20,7 @@
   if(self) {
     _color = [UIColor blackColor];
     _font = [UIFont systemFontOfSize:14];
+    _backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.0f];
   }
   return self;
 }
@@ -46,7 +47,7 @@
 
 
 
-- (Byte *)drawStringToTexture:(NSString *)text
+- (Byte *)drawStringToTexture:(NSString *)text 
 {
   CGSize size = [self textSize:text];
 
@@ -64,8 +65,16 @@
                         kCGImageAlphaPremultipliedLast // 透明度の指定方法
                         );
   
-  CGContextSetRGBFillColor(_bitmapContext,0,0,0,1.0);
+//  CGContextSetRGBFillColor(_bitmapContext,0,0,0,1.0);
+  CGFloat red;
+  CGFloat green;
+  CGFloat blue;
+  CGFloat alpha;
+  [self.backgroundColor getRed:&red green:&green blue:&blue alpha:&alpha];
+  
+  CGContextSetRGBFillColor(_bitmapContext, red, green, blue, alpha);
   CGRect rect = CGRectMake(0.0f, 0.0f, size.width, size.height);
+  CGContextFillRect(_bitmapContext, rect);
   UIGraphicsPushContext(_bitmapContext);
   [self.color set];
   

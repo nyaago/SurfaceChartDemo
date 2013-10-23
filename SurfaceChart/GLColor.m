@@ -11,8 +11,6 @@
 @interface GLColor () {
   CGFloat _rgba[4];
   CGFloat _rgb[3];
-  CGFloat a;
-  
 }
 
 @end
@@ -70,11 +68,10 @@
   memcpy(dest + index, src, 4 * sizeof(CGFloat));
 }
 
-- (void) copyRgbaArray:(CGFloat *)dest  withIndex:(NSInteger)index{
+- (void) copyRgbaToArray:(CGFloat *)dest  withIndex:(NSInteger)index{
   CGFloat *src = [self rgbaArray];
   memcpy(dest + index, src, 3 * sizeof(CGFloat));
 }
-
 
 
 @end
