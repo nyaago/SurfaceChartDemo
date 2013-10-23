@@ -124,7 +124,7 @@ enum
                              + [self countXZAxisVertex]
                              + [self countYZAxisVertex]
                              + 4)
-                            * VERTEX_ATTRIB_SIZE * 4];
+                            * VERTEX_ATTRIB_SIZE];
   [self.view addGestureRecognizer:self.panGestureRecognizer];
   self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -189,7 +189,8 @@ enum
   glActiveTexture(GL_TEXTURE0);
   glBindTexture( GL_TEXTURE_2D, _texture );
   
-  glBufferData(GL_ARRAY_BUFFER, sizeof(CGFloat) + [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(CGFloat) * [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
   //glBufferData(GL_ARRAY_BUFFER, sizeof(gCubeVertexData), gCubeVertexData, GL_STATIC_DRAW);
   glEnableVertexAttribArray(GLKVertexAttribPosition);
   glVertexAttribPointer(GLKVertexAttribPosition, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE,
@@ -263,7 +264,6 @@ enum
   _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, modelViewMatrix);
   
   //_rotation += self.timeSinceLastUpdate * 0.5f;
-  // @TODO - ピンチ中は..Pauseしない..
   self.paused = YES;
 }
 
@@ -618,7 +618,8 @@ enum
       [_vertexs advancePosition:TEXCOORDS_SIZE];
       
       // 奥右
-      y = [self.source yWithX:x + [self.source xAxisScaleForValue] z:z + [self.source zAxisScaleForValue]];
+      y = [self.source yWithX:x + [self.source xAxisScaleForValue]
+                            z:z + [self.source zAxisScaleForValue]];
       vertex[0] = [self xAxisToPoint:x + [self.source xAxisScaleForValue]];
       vertex[1] = [self yAxisToPoint:y] - SUB_FROM_TRIAGLE_Y;
       vertex[2] = [self zAxisToPoint:z + [self.source zAxisScaleForValue]];
@@ -645,7 +646,8 @@ enum
       [_vertexs advancePosition:TEXCOORDS_SIZE];
   
       vertex[0] = [self xAxisToPoint:x + [self.source xAxisScaleForValue]];
-      vertex[1] = [self yAxisToPoint:[self.source yWithX:x + [self.source xAxisScaleForValue] z:z]];
+      vertex[1] = [self yAxisToPoint:[self.source yWithX:x + [self.source xAxisScaleForValue]
+                                                       z:z]];
       [_vertexs putValues:vertex count:3];
       [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
       [_vertexs advancePosition:TEXCOORDS_SIZE];
@@ -745,7 +747,9 @@ enum
   glLineWidth(1.0f);
 
   int pos = first / VERTEX_ATTRIB_SIZE;
-  for(int x =  self.source.xAxisMin; x <  self.source.xAxisMax; x +=  self.source.xAxisScaleForValue) {
+  for(int x =  self.source.xAxisMin;
+      x <  self.source.xAxisMax;
+      x +=  self.source.xAxisScaleForValue) {
     for(int z =  self.source.zAxisMin;
         z <  self.source.zAxisMax;
         z +=  self.source.zAxisScaleForValue) {
@@ -755,7 +759,9 @@ enum
     }
   }
   
-  for(int x =  self.source.xAxisMin; x < self.source.xAxisMax; x +=  self.source.xAxisScaleForValue) {
+  for(int x =  self.source.xAxisMin;
+      x < self.source.xAxisMax;
+      x +=  self.source.xAxisScaleForValue) {
     for(int z = self.source.zAxisMin;
         z <=  self.source.zAxisMax;
         z +=  self.source.zAxisScaleForValue) {
@@ -765,7 +771,9 @@ enum
     }
   }
   
-  for(int z =  self.source.zAxisMin; z <  self.source.zAxisMax; z += self.source.zAxisScaleForValue) {
+  for(int z =  self.source.zAxisMin;
+      z <  self.source.zAxisMax;
+      z += self.source.zAxisScaleForValue) {
     for(int x =  self.source.xAxisMin;
         x <= self.source.xAxisMax;
         x += self.source.xAxisScaleForValue) {
