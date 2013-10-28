@@ -24,10 +24,16 @@ enum
 {
     UNIFORM_MODELVIEWPROJECTION_MATRIX,
     UNIFORM_NORMAL_MATRIX,
-UNIFORM_TEXTURE,
+    UNIFORM_TEXTURE,
     NUM_UNIFORMS,
 };
 GLint uniforms[NUM_UNIFORMS];
+
+typedef enum {
+  POINT_BOTTOM,
+  POINT_TOP,
+  POINT_CENTER
+} TextImagePoint;
 
 // Attribute index.
 enum
@@ -943,7 +949,7 @@ enum
               font:[UIFont systemFontOfSize:[self scaleFontSize]]
          textColor:self.textColor
          pointLeft:YES
-       pointBottom:NO];
+     pointVertical:POINT_TOP];
   }
   
   [self drawText:[self.source xAxisTitle]
@@ -953,7 +959,7 @@ enum
             font:[UIFont systemFontOfSize:[self scaleFontSize]]
        textColor:self.textColor
        pointLeft:YES
-     pointBottom:NO];
+   pointVertical:POINT_TOP];
 }
 
 
@@ -972,7 +978,7 @@ enum
               font:[UIFont systemFontOfSize:[self scaleFontSize]]
          textColor:self.textColor
          pointLeft:NO
-       pointBottom:YES];
+       pointVertical:POINT_CENTER];
     [self drawText:[self.source yAxisName:y]
                  x:[self maxXOfChart]
                  y:[self yAxisToPoint:y]
@@ -980,7 +986,7 @@ enum
               font:[UIFont systemFontOfSize:[self scaleFontSize]]
          textColor:self.textColor
          pointLeft:YES
-       pointBottom:YES];
+     pointVertical:POINT_CENTER];
   }
   
   [self drawText:[self.source yAxisTitle]
@@ -990,7 +996,7 @@ enum
             font:[UIFont systemFontOfSize:[self scaleFontSize]]
        textColor:self.textColor
        pointLeft:YES
-     pointBottom:YES];
+   pointVertical:POINT_BOTTOM];
 }
 
 
@@ -1010,7 +1016,7 @@ enum
               font:[UIFont systemFontOfSize:[self scaleFontSize]]
          textColor:self.textColor
          pointLeft:NO
-       pointBottom:NO];
+     pointVertical:POINT_TOP];
   }
   
   [self drawText:[self.source zAxisTitle]
@@ -1020,7 +1026,7 @@ enum
             font:[UIFont systemFontOfSize:[self scaleFontSize]]
        textColor:self.textColor
        pointLeft:YES
-     pointBottom:YES];
+   pointVertical:POINT_BOTTOM];
 }
 
 
@@ -1032,11 +1038,12 @@ enum
  * @param z 描画位置-openglの座標 -z
  * @param font フォント
  * @param pointLeft 指定座標を文字出力の左側で行うならtrue
- * @param pointBottom 指定座標を文字出力のBottom側で行うならtrue
+ * @param pointVertical 縦座標の指定方法
  */
 - (void) drawText:(NSString *)text x:(CGFloat)x y:(CGFloat)y z:(CGFloat)z
              font:(UIFont *)font textColor:(UIColor *)textColor
-            pointLeft:(BOOL)pointLeft pointBottom:(BOOL)pointBottom {
+            pointLeft:(BOOL)pointLeft
+    pointVertical:(TextImagePoint)pointVertical {
 
   float margin = 0.0f;
   // テキストのビットマップを生成してOpenGLへ
@@ -1063,7 +1070,8 @@ enum
   float h = [self pxHeightToOpenGLHeight:font.lineHeight * (1.0f + margin) ];
   float left = pointLeft ? x + xMergin : x - textWidth - xMergin;
   float right = left + w;
-  float bottom = (pointBottom ? y : y - h) ;
+  float bottom = (pointVertical == POINT_BOTTOM ? y :
+                  (pointVertical == POINT_TOP ? y - h : y - (h / 2))) ;
   float top = bottom + h;
   CGFloat  vertex [] =  {
     left, top, z,
