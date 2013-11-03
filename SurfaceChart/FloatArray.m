@@ -41,5 +41,9 @@
   return _position;
 }
 
+- (void) dealloc {
+  free(_array);
+}
+
 
 @end
