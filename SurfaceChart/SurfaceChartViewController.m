@@ -179,9 +179,8 @@ enum
 {
   [EAGLContext setCurrentContext:self.context];
   
-  [self loadTextureShaders];
+//  [self loadTextureShaders];
   [self loadShaders];
-  [self addVertex];
   self.effect = [[GLKBaseEffect alloc] init];
   self.effect.light0.enabled = GL_TRUE;
   self.effect.light0.diffuseColor = GLKVector4Make(1.0f, 0.4f, 0.4f, 1.0f);
@@ -193,7 +192,6 @@ enum
   
   glGenBuffers(1, &_vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-  
   glGenTextures( 1, &_texture );
   glActiveTexture(GL_TEXTURE0);
   glBindTexture( GL_TEXTURE_2D, _texture );
@@ -278,6 +276,9 @@ enum
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
+  
+  [self addVertex];
+
   glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -291,6 +292,7 @@ enum
   // Render the object again with ES2
   // Chart
   glUseProgram(_program);
+  glUniform1i(glGetUniformLocation(_textureProgram, "texture"), 0);
   glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0,
                      _modelViewProjectionMatrix.m);
   glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
@@ -300,11 +302,10 @@ enum
   
   // 文字
   glDisableVertexAttribArray(GLKVertexAttribColor);
-  glUseProgram(_textureProgram);
+//  glUseProgram(_textureProgram);
   glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0,
                      _modelViewProjectionMatrix.m);
   glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
-  glUniform1i(glGetUniformLocation(_textureProgram, "texture"), 0);
   glEnableVertexAttribArray(GLKVertexAttribTexCoord0);
 
   [self drawTextTextures];
@@ -322,7 +323,8 @@ enum
   glBindAttribLocation(_program, GLKVertexAttribPosition, "position");
   //  glBindAttribLocation(_program, GLKVertexAttribNormal, "normal");
   glBindAttribLocation(_program, GLKVertexAttribColor, "color");
-  
+  glBindAttribLocation(_program, GLKVertexAttribTexCoord0, "texcoord");
+
   // Link program.
   if (![self.shaderLoader linkProgram]) {
     NSLog(@"Failed to link program: %d", self.shaderLoader.program);
@@ -363,6 +365,12 @@ enum
   return YES;
 }
 
+#pragma mark - Properties
+
+- (void) setSource:(NSObject<SurfaceChartViewSource> *)source {
+  _source = source;
+  self.paused = NO;
+}
 
 #pragma mark Drawing
 
@@ -373,6 +381,23 @@ enum
   _firstOfXZAxis = [self addYZAxisVertex];
   _firstOfValue = [self addXZAxisVertex];
   _firstOfTexture = [self addValueVertex];
+/*
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(CGFloat) * [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
+  */
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  0,
+                  sizeof(CGFloat) * [_vertexs count],
+                  _vertexs.array);
+
+/*
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  sizeof(CGFloat) * pos,
+                  4 * VERTEX_ATTRIB_SIZE * sizeof(CGFloat),
+                  self.vertexs.array + ( [self texturePositionInValueVertex] * VERTEX_ATTRIB_SIZE));
+ */
+  //
+
 }
 
 - (void) drawVertexArray {
@@ -1315,7 +1340,7 @@ enum
                                  initWithRed:204.0f/255.0f green:204.0f/255.0f blue:204.0f/255.0f];
   _frameLineColor = [[GLColor alloc]
                      initWithRed:255.0f/255.0f green:255.0f/255.0f blue:255.0f/255.0f];
-  _valueLineColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
+  _valueLineColor = [[GLColor alloc] initWithRed:15.0f/255.0f green:15.0f/255.0f blue:15.0f/255.0f];
   _textBackgroundColor = [[GLColor alloc] initWithRed:0.0f green:0.0f blue:0.0f];
   
   _textColor = [UIColor blackColor];

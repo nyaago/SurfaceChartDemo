@@ -135,6 +135,7 @@
 
 // for IOS6
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wconversion"
 - (void) drawTextLegacy:(NSString *)text font:(UIFont *)font x:(CGFloat)x y:(CGFloat)y
                   color:(UIColor *)color
                 context:(CGContextRef)context {
@@ -143,6 +144,7 @@
   [text drawInRect:rect withFont:font lineBreakMode:UILineBreakModeWordWrap];
 }
 #pragma GCC diagnostic warning "-Wdeprecated-declarations"
+#pragma GCC diagnostic warning "-Wconversion"
 
 
 @end
