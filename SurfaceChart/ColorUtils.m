@@ -14,7 +14,7 @@
 + (NSInteger) valueToHue:(NSInteger)value max:(NSInteger)max min:(NSInteger)min
                 hueWidth:(NSInteger)hueWidth minHue:(NSInteger)minHue {
   int hue =  minHue
-  -  (int)(((float)(value - min)) /  ((float)((float)max - (float)min) /  (float)hueWidth));
+  -  (int)( ((float)(value - min)) /  ((float)((float)max - (float)min) /  (float)hueWidth));
   if(hue < 0) {
     hue = 0;
   }

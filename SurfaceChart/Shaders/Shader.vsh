@@ -12,6 +12,8 @@ varying lowp vec4 colorVarying;
 attribute vec4 color;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
+attribute vec2 texcoord;
+varying vec2 texcoordVarying;
 
 void main()
 {
@@ -21,5 +23,6 @@ void main()
 //  float nDotVP = max(0.0, dot(eyeNormal, normalize(lightPosition)));
 //  colorVarying = diffuseColor * nDotVP;
   colorVarying = color;
+  texcoordVarying = texcoord;
   gl_Position = modelViewProjectionMatrix * position;
 }

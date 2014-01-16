@@ -20,19 +20,19 @@
   self = [super init];
   if(self) {
     _count = count;
-    _array = (CGFloat *)malloc(sizeof(CGFloat) * count);
+    _array = (float *)malloc(sizeof(float) * count);
     _position = 0;
   }
   return self;
 }
 
-- (void) putValue:(CGFloat)value {
+- (void) putValue:(float)value {
   *(_array + _position) = value;
   _position += 1;
 }
 
-- (void) putValues:(CGFloat [])values count:(NSInteger)count {
-  memcpy(_array + _position, values, sizeof(CGFloat) * count);
+- (void) putValues:(float [])values count:(NSInteger)count {
+  memcpy(_array + _position, values, sizeof(float) * count);
   _position += count;
 }
 
@@ -48,5 +48,11 @@
   free(_array);
 }
 
+- (void) setPosition:(NSInteger)position {
+  _position = position;
+  if(_position > _count) {
+    NSLog(@"position over " );
+  }
+}
 
 @end

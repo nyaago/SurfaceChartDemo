@@ -197,22 +197,22 @@ enum
   glBindTexture( GL_TEXTURE_2D, _texture );
   
   glBufferData(GL_ARRAY_BUFFER,
-               sizeof(CGFloat) * [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
+               sizeof(float) * [_vertexs count] , _vertexs.array, GL_STATIC_DRAW);
   //glBufferData(GL_ARRAY_BUFFER, sizeof(gCubeVertexData), gCubeVertexData, GL_STATIC_DRAW);
   glEnableVertexAttribArray(GLKVertexAttribPosition);
   glVertexAttribPointer(GLKVertexAttribPosition, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE,
-                        VERTEX_ATTRIB_SIZE * sizeof(GLfloat),
+                        VERTEX_ATTRIB_SIZE * sizeof(float),
                         BUFFER_OFFSET(0));
   
   glEnableVertexAttribArray(GLKVertexAttribColor);
   glVertexAttribPointer(GLKVertexAttribColor, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE,
                         VERTEX_ATTRIB_SIZE * sizeof(GLfloat),
-                        BUFFER_OFFSET(VERTEX_POS_SIZE * sizeof(GLfloat)));
+                        BUFFER_OFFSET(VERTEX_POS_SIZE * sizeof(float)));
 
   glEnableVertexAttribArray(GLKVertexAttribTexCoord0);
   glVertexAttribPointer(GLKVertexAttribTexCoord0, TEXCOORDS_SIZE, GL_FLOAT, GL_FALSE,
-                        VERTEX_ATTRIB_SIZE * sizeof(GLfloat),
-                        BUFFER_OFFSET((VERTEX_POS_SIZE + VERTEX_COLOR_SIZE) * sizeof(GLfloat)));
+                        VERTEX_ATTRIB_SIZE * sizeof(float),
+                        BUFFER_OFFSET((VERTEX_POS_SIZE + VERTEX_COLOR_SIZE) * sizeof(float)));
 
   
   glBindVertexArrayOES(0);
@@ -387,7 +387,7 @@ enum
   */
   glBufferSubData(GL_ARRAY_BUFFER,
                   0,
-                  sizeof(CGFloat) * [_vertexs count],
+                  sizeof(float) * [_vertexs count],
                   _vertexs.array);
 
 /*
@@ -537,7 +537,7 @@ enum
       x <= [self.source xAxisMax];
       x += [self.source xAxisScale]) {
     vertex[0] = [self xAxisToPoint:x];
-    vertex[1] = [self yAxisToPoint:[self.source yWithX:x z:[self.source zAxisMax]]];
+    vertex[1] = [self yAxisToPoint:[self.source yWithX:x z:[self.source  zAxisMin]]];
     vertex[2] = [self maxZOfChart];
     [_vertexs putValues:vertex count:3];
     [_vertexs putValues:[self.valueLineColor rgbArray] count:3];
@@ -655,7 +655,7 @@ enum
  * @return バッファの最後の位置
  */
 -(NSInteger) addXYAxisVertex {
-  CGFloat vertex[3];
+  float vertex[3];
   
   // 枠
   vertex[0] = -[self maxXOfChart];
@@ -757,7 +757,7 @@ enum
  * @return バッファの最後の位置
  */
 -(NSInteger) addYZAxisVertex {
-  CGFloat vertex[3];
+  float vertex[3];
   
   // 枠
   vertex[0] = [self maxXOfChart];
@@ -861,7 +861,7 @@ enum
  * @return バッファの最後の位置
  */
 -(NSInteger) addXZAxisVertex {
-  CGFloat vertex[3];
+  float vertex[3];
   
   // 枠
   vertex[0] = -[self maxXOfChart];
@@ -992,7 +992,7 @@ enum
  * Y軸の値テキストを描画
  */
 -(void) drawYAxisNames {
-  for(int y = [self.source yAxisMin];
+  for(int y = [self.source yAxisMin] + [self.source yAxisScale];
       y <= [self.source yAxisMax];
       y += [self.source yAxisScale] ) {
     
@@ -1122,8 +1122,8 @@ enum
     [_vertexs putValue:uv[i*2+1]];
   }
   glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(CGFloat) * pos,
-                  4 * VERTEX_ATTRIB_SIZE * sizeof(CGFloat),
+                  sizeof(float) * pos,
+                  4 * VERTEX_ATTRIB_SIZE * sizeof(float),
                   _vertexs.array + ( [self texturePositionInValueVertex] * VERTEX_ATTRIB_SIZE));
   //
   glDrawArrays(GL_TRIANGLE_STRIP, [self texturePositionInValueVertex], 4);
@@ -1175,7 +1175,7 @@ enum
  * @return Z座標
  */
 - (CGFloat) zAxisToPoint:(NSInteger)axis {
-  return (CGFloat)(axis - self.source.zAxisMin) / (self.source.zAxisMax - self.source.zAxisMin)
+  return (CGFloat)(self.source.zAxisMax - axis) / (self.source.zAxisMax - self.source.zAxisMin)
   * [self maxZOfChart] * 2 - [self maxZOfChart];
   
 }
@@ -1187,10 +1187,10 @@ enum
 - (CGFloat) maxXOfChart {
   CGFloat ratio = [self aspect];
   if(ratio > 1.0f) {   //　端末横向き
-    return [self rarioToRenderX] * ratio;
+    return [self rarioToRenderXHor] * ratio;
   }
   else {               // 端末縦向き
-    return [self rarioToRenderXHor] * ratio;
+    return [self rarioToRenderX] * ratio;
   }
 }
 
@@ -1200,10 +1200,10 @@ enum
 - (CGFloat) maxYOfChart {
   CGFloat ratio = [self aspect];
   if(ratio > 1.0f) {   //　端末横向き
-    return [self rarioToRenderY] * ratio;
+    return [self rarioToRenderYHor];
   }
   else {               // 端末縦向き
-    return [self rarioToRenderYHor] * ratio;
+    return [self rarioToRenderY];
   }
 }
 
@@ -1213,10 +1213,10 @@ enum
 - (CGFloat) maxZOfChart {
   CGFloat ratio = [self aspect];
   if(ratio > 1.0f) {   //　端末横向き
-    return [self rarioToRenderZ] * ratio;
+    return [self ratioToRenderZHor];
   }
   else {               // 端末縦向き
-    return [self ratioToRenderZHor] * ratio;
+    return [self rarioToRenderZ];
   }
 }
 
@@ -1327,10 +1327,10 @@ enum
 }
 
 - (void) setDefault {
-  _rarioToRenderX = 0.65f;
+  _rarioToRenderX = 0.75f;
   _rarioToRenderXHor = 0.8f;
-  _rarioToRenderY = 0.80f;
-  _rarioToRenderYHor = 0.75f;
+  _rarioToRenderY = 0.75f;
+  _rarioToRenderYHor = 0.65f;
   _rarioToRenderZ = 0.85f;
   _ratioToRenderZHor = 0.75f;
   

@@ -12,11 +12,11 @@
 
 - (id) initWithCount:(NSInteger)count;
 
-- (void) putValue:(CGFloat)value;
-- (void) putValues:(CGFloat [])values count:(NSInteger)count;
+- (void) putValue:(float)value;
+- (void) putValues:(float [])values count:(NSInteger)count;
 - (NSInteger) advancePosition:(NSInteger)count;
 
-@property (nonatomic, readonly) CGFloat *array;
+@property (nonatomic, readonly) float *array;
 @property (nonatomic) NSInteger position;
 @property (nonatomic) NSInteger count;
 

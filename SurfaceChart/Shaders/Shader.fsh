@@ -13,5 +13,11 @@ uniform sampler2D texture;
 
 void main()
 {
-  gl_FragColor = colorVarying;
+  lowp vec4  color= texture2D( texture, texcoordVarying );
+  if(colorVarying.r > 0.0 || colorVarying.g > 0.0 || colorVarying.b > 0.0) {
+   gl_FragColor = colorVarying ;
+  }
+  else {
+    gl_FragColor = color;
+  }
 }

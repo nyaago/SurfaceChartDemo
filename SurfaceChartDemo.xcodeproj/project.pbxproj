@@ -9,9 +9,7 @@
 /* Begin PBXBuildFile section */
 		7231BB03181766E200AF54EB /* ShaderLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 7231BB02181766E200AF54EB /* ShaderLoader.m */; };
 		72894D53180E596300CED4CF /* TextImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 72894D52180E596300CED4CF /* TextImage.m */; };
-		72894D54180E88A800CED4CF /* TextureShader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F72716180D264E003DC48D /* TextureShader.fsh */; };
 		72894D55180E88A800CED4CF /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F72710180D116C003DC48D /* Shader.fsh */; };
-		72894D56180E88A800CED4CF /* TextureShader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 72F72712180D1185003DC48D /* TextureShader.vsh */; };
 		72F726D4180CCDE8003DC48D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726D3180CCDE8003DC48D /* Foundation.framework */; };
 		72F726D6180CCDE8003DC48D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726D5180CCDE8003DC48D /* CoreGraphics.framework */; };
 		72F726D8180CCDE9003DC48D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F726D7180CCDE9003DC48D /* UIKit.framework */; };
@@ -29,8 +27,6 @@
 		72F72705180CCDE9003DC48D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 72F72703180CCDE9003DC48D /* InfoPlist.strings */; };
 		72F72707180CCDE9003DC48D /* SurfaceChartDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F72706180CCDE9003DC48D /* SurfaceChartDemoTests.m */; };
 		72F72711180D116C003DC48D /* Shader.fsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72710180D116C003DC48D /* Shader.fsh */; };
-		72F72713180D1185003DC48D /* TextureShader.vsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72712180D1185003DC48D /* TextureShader.vsh */; };
-		72F72717180D264E003DC48D /* TextureShader.fsh in Sources */ = {isa = PBXBuildFile; fileRef = 72F72716180D264E003DC48D /* TextureShader.fsh */; };
 		72F7271A180D2ADC003DC48D /* SurfaceChartDemoDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F72719180D2ADC003DC48D /* SurfaceChartDemoDataSource.m */; };
 		72F7271D180D3B4B003DC48D /* GLColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F7271C180D3B4B003DC48D /* GLColor.m */; };
 		72F72720180D4D29003DC48D /* ColorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 72F7271F180D4D29003DC48D /* ColorUtils.m */; };
@@ -74,8 +70,6 @@
 		72F72704180CCDE9003DC48D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		72F72706180CCDE9003DC48D /* SurfaceChartDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SurfaceChartDemoTests.m; sourceTree = "<group>"; };
 		72F72710180D116C003DC48D /* Shader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = Shader.fsh; sourceTree = "<group>"; };
-		72F72712180D1185003DC48D /* TextureShader.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = TextureShader.vsh; sourceTree = "<group>"; };
-		72F72716180D264E003DC48D /* TextureShader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = TextureShader.fsh; sourceTree = "<group>"; };
 		72F72718180D2ADC003DC48D /* SurfaceChartDemoDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SurfaceChartDemoDataSource.h; sourceTree = "<group>"; };
 		72F72719180D2ADC003DC48D /* SurfaceChartDemoDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SurfaceChartDemoDataSource.m; sourceTree = "<group>"; };
 		72F7271B180D3B4B003DC48D /* GLColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLColor.h; sourceTree = "<group>"; };
@@ -218,10 +212,8 @@
 		72F72715180D256B003DC48D /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
-				72F72716180D264E003DC48D /* TextureShader.fsh */,
 				72F726EE180CCDE9003DC48D /* Shader.vsh */,
 				72F72710180D116C003DC48D /* Shader.fsh */,
-				72F72712180D1185003DC48D /* TextureShader.vsh */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -302,9 +294,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				72894D54180E88A800CED4CF /* TextureShader.fsh in Resources */,
 				72894D55180E88A800CED4CF /* Shader.fsh in Resources */,
-				72894D56180E88A800CED4CF /* TextureShader.vsh in Resources */,
 				72F726EF180CCDE9003DC48D /* Shader.vsh in Resources */,
 				72F726F4180CCDE9003DC48D /* Images.xcassets in Resources */,
 				72F726E2180CCDE9003DC48D /* InfoPlist.strings in Resources */,
@@ -326,12 +316,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				72F72717180D264E003DC48D /* TextureShader.fsh in Sources */,
 				72F72711180D116C003DC48D /* Shader.fsh in Sources */,
 				72F726F2180CCDE9003DC48D /* SurfaceChartViewController.m in Sources */,
 				72F72720180D4D29003DC48D /* ColorUtils.m in Sources */,
 				72F72723180D769C003DC48D /* FloatArray.m in Sources */,
-				72F72713180D1185003DC48D /* TextureShader.vsh in Sources */,
 				72894D53180E596300CED4CF /* TextImage.m in Sources */,
 				72F726E8180CCDE9003DC48D /* AppDelegate.m in Sources */,
 				72F7271A180D2ADC003DC48D /* SurfaceChartDemoDataSource.m in Sources */,

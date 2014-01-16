@@ -9,15 +9,15 @@
 #import "GLColor.h"
 
 @interface GLColor () {
-  CGFloat _rgba[4];
-  CGFloat _rgb[3];
+  float _rgba[4];
+  float _rgb[3];
 }
 
 @end
 
 @implementation GLColor
 
-- (id) initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha {
+- (id) initWithRed:(float)red green:(float)green blue:(float)blue alpha:(float)alpha {
   self = [super init];
   if(self) {
     self.red = red;
@@ -28,33 +28,38 @@
   return self;
 }
 
-- (id) initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue {
+- (id) initWithRed:(float)red green:(float)green blue:(float)blue {
   return [self initWithRed:red green:green blue:blue alpha:1.0f];
 }
 
-- (id) initWithHue:(CGFloat)hue saturation:(CGFloat)saturation brightness:(CGFloat)brightness
-             alpha:(CGFloat)alpha {
+- (id) initWithHue:(float)hue saturation:(float)saturation brightness:(float)brightness
+             alpha:(float)alpha {
+  CGFloat cgRed, cgGreen, cgBlue, cgAlpha;
   self = [super init];
   if(self) {
     UIColor *color = [UIColor colorWithHue:hue saturation:saturation brightness:brightness alpha:alpha];
-    [color getRed:&_red green:&_green blue:&_blue alpha:&_alpha];
+    [color getRed:&cgRed green:&cgGreen blue:&cgBlue alpha:&cgAlpha];
+    _red = cgRed;
+    _green = cgGreen;
+    _blue = cgBlue;
+    _alpha = cgAlpha;
   }
   return self;
 }
 
-- (id) initWithHue:(CGFloat)hue saturation:(CGFloat)saturation brightness:(CGFloat)brightness {
+- (id) initWithHue:(float)hue saturation:(float)saturation brightness:(float)brightness {
   return [self initWithHue:hue saturation:saturation brightness:brightness alpha:1.0f];
 }
 
 
-- (CGFloat *) rgbArray {
+- (float *) rgbArray {
   _rgb[0] = self.red;
   _rgb[1] = self.green;
   _rgb[2] = self.blue;
   return _rgb;
 }
 
-- (CGFloat *) rgbaArray {
+- (float *) rgbaArray {
   _rgba[0] = self.red;
   _rgba[1] = self.green;
   _rgba[2] = self.blue;
@@ -62,15 +67,15 @@
   return _rgba;
 }
 
-- (void) copyRgbToArray:(CGFloat *)dest withIndex:(NSInteger)index;
+- (void) copyRgbToArray:(float *)dest withIndex:(NSInteger)index;
  {
-  CGFloat *src = [self rgbArray];
-  memcpy(dest + index, src, 4 * sizeof(CGFloat));
+  float *src = [self rgbArray];
+  memcpy(dest + index, src, 4 * sizeof(float));
 }
 
-- (void) copyRgbaToArray:(CGFloat *)dest  withIndex:(NSInteger)index{
-  CGFloat *src = [self rgbaArray];
-  memcpy(dest + index, src, 3 * sizeof(CGFloat));
+- (void) copyRgbaToArray:(float *)dest  withIndex:(NSInteger)index{
+  float *src = [self rgbaArray];
+  memcpy(dest + index, src, 3 * sizeof(float));
 }
 
 

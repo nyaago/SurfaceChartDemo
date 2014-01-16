@@ -10,26 +10,26 @@
 
 @interface GLColor : NSObject
 
-@property (nonatomic) CGFloat red;
-@property (nonatomic) CGFloat blue;
-@property (nonatomic) CGFloat green;
-@property (nonatomic) CGFloat alpha;
+@property (nonatomic) float red;
+@property (nonatomic) float blue;
+@property (nonatomic) float green;
+@property (nonatomic) float alpha;
 
-- (id) initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
+- (id) initWithRed:(float)red green:(float)green blue:(float)blue alpha:(float)alpha;
 
-- (id) initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue;
+- (id) initWithRed:(float)red green:(float)green blue:(float)blue;
 
-- (id) initWithHue:(CGFloat)hue saturation:(CGFloat)saturation brightness:(CGFloat)brightness
-             alpha:(CGFloat)alpha;
+- (id) initWithHue:(float)hue saturation:(float)saturation brightness:(float)brightness
+             alpha:(float)alpha;
 
-- (id) initWithHue:(CGFloat)hue saturation:(CGFloat)saturation brightness:(CGFloat)brightness;
+- (id) initWithHue:(float)hue saturation:(float)saturation brightness:(float)brightness;
 
-- (CGFloat *) rgbArray;
+- (float *) rgbArray;
 
-- (CGFloat *) rgbaArray;
+- (float *) rgbaArray;
 
-- (void) copyRgbToArray:(CGFloat *)dest withIndex:(NSInteger)index;
+- (void) copyRgbToArray:(float *)dest withIndex:(NSInteger)index;
 
-- (void) copyRgbaToArray:(CGFloat *)dest  withIndex:(NSInteger)index;
+- (void) copyRgbaToArray:(float *)dest  withIndex:(NSInteger)index;
 
 @end
